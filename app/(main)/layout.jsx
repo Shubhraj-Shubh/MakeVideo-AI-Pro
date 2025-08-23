@@ -2,6 +2,7 @@ import React from 'react';
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import AppSidebar  from "./_components/AppSidebar"
 import AppHeader  from "./_components/AppHeader"
+import { Toaster } from "@/components/ui/sonner"
 
 function UserLayout({ children }) {
   return (
@@ -12,6 +13,7 @@ function UserLayout({ children }) {
         <AppHeader />
         <div className="p-10">
           {children}
+          <Toaster />
         </div>
       </div>
       </SidebarProvider>
