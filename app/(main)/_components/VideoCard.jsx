@@ -4,16 +4,17 @@ import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 
 
-function VideoCard({ video }) {
+function VideoCard({ video ,onUnsave}) {
   const [loading, setLoading] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
 
 
-    //Check whether it is in localStorage or not
+
+    //Check whether it is in localStorage or not for every unique video_id
   useEffect(() => {
     const savedVideos = JSON.parse(localStorage.getItem("myVideos") || "[]");
     setIsSaved(savedVideos.includes(video.id));
-  }, [video.id]);
+  },[video.id]);
 
 
     // Save video to localStorage
@@ -39,6 +40,9 @@ function VideoCard({ video }) {
     setIsSaved(false);
     toast.success('Removed from your Collection!');
     setLoading(false);
+       if (typeof onUnsave === "function") {
+        onUnsave(video.id); //  PASS THE ID BACK TO THE PARENT
+    }
   };
 
   return (
