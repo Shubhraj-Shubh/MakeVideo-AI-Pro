@@ -1,7 +1,7 @@
 # MakeVideo AI — Text-to-Video Generator
 Deployed Link-https://make-video-ai.vercel.app/
-MakeVideo AI is a modern, full-stack AI-powered text-to-video generator built with Next.js, React, Tailwind CSS, Drizzle ORM, Postgre and Replicate/Google Gemini APIs.  
-It features a beautiful UI, responsive layouts, and a robust backend for storing and exploring generated videos.
+MakeVideo AI is a full-stack, AI-powered video generation platform that transforms simple text prompts into cinematic video clips. Built with a modern tech stack including Next.js, Tailwind CSS, and Drizzle ORM with a PostgreSQL database, this application demonstrates a complete end-to-end workflow from user input to final output.
+The backend leverages a multi-stage pipeline, first enhancing user prompts with the Google Gemini API for richer detail, then generating video content via the Replicate API and ModelLabs API. The result is a seamless and responsive user experience with a beautiful UI for generating, exploring, and saving AI-created videos.
 
 ---
 
@@ -93,7 +93,7 @@ MakeVideo-AI/
 
 ### 1. **Clone the Repository**
 ```sh
-git clone https://github.com/yourusername/makevideo-ai.git
+git clone https://github.com/Shubhraj-Shubh/MakeVideo-AI.git
 cd makevideo-ai
 ```
 
@@ -104,7 +104,7 @@ npm install
 
 ### 3. **Configure Environment Variables**
 
-Create a `.env.local` file in the root directory:
+Create a `.env` file in the root directory:
 
 ```
 DATABASE_URL=your_postgres_connection_url
@@ -149,8 +149,9 @@ Visit [http://localhost:3000](http://localhost:3000) in your browser.
 - **Logic:**  
   - Enhances prompt with Gemini.
   - Tries Replicate for video generation.
-  - Fallback to ModelsLab or default video if needed.
-  - Saves video and prompt to DB.
+  - Tries ModelsLab for short video genration.
+  - Returns default video if needed.
+  - Saves videoUrl and prompt to DB.
 
 ### **GET `/api/get-videos`**
 - **Response:**  
@@ -178,7 +179,7 @@ Visit [http://localhost:3000](http://localhost:3000) in your browser.
 - **UI Colors:**  
   Easily change gradients and colors in Tailwind classes.
 - **Video Model:**  
-  Swap Replicate/ModelsLab endpoints as needed.
+  Use Replicate/ModelsLab endpoints as needed.
 - **Database:**  
   Extend schema for more metadata (user, likes, etc).
 
@@ -188,7 +189,7 @@ Visit [http://localhost:3000](http://localhost:3000) in your browser.
 
 Before you begin, ensure you have the following installed:
 - [Node.js](https://nodejs.org/) (v18 or later)
-- [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
+- [npm](https://www.npmjs.com/) 
 - A [PostgreSQL](https://www.postgresql.org/) database (you can get one for free from NeonDB or Supabase)
 
 ---
