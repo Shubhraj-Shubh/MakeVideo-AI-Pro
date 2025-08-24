@@ -8,14 +8,16 @@ function UserLayout({ children }) {
   return (
   
          <SidebarProvider>
+            
             <AppSidebar />
         <div className="w-full">
         <AppHeader />
-        <div className="p-10">
+        <div className="p-5">
           {children}
           <Toaster />
         </div>
       </div>
+   
       </SidebarProvider>
     
     

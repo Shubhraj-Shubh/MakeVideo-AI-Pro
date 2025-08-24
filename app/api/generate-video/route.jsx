@@ -1,7 +1,7 @@
 
-// import {
-//   GoogleGenAI,
-// } from '@google/genai';
+import {
+  GoogleGenAI,
+} from '@google/genai';
 import { NextResponse } from "next/server";
 import { db } from "@/config/db";
 import { videosTable } from "@/config/schema";
@@ -9,20 +9,20 @@ import Replicate from "replicate";
 const replicate = new Replicate();
 
 
-// const PROMPT=`Create a short, high-quality cinematic video prompt that can be fed to a video generation AI. 
-// Conditions:
-// - Video length: 5-10 seconds
-// - Aspect ratio: 16:9
-// - Style: vivid colors, smooth transitions, clarity, realism
-// - Content must faithfully represent the user's description
-// - Keep it concise but descriptive enough for AI video generation
-// Return ONLY the enhanced prompt as plain text string, do NOT include JSON or explanation
-// Based on the following user input: `
+const PROMPT=`Create a short, high-quality cinematic video prompt that can be fed to a video generation AI. 
+Conditions:
+- Video length: 5-10 seconds
+- Aspect ratio: 16:9
+- Style: vivid colors, smooth transitions, clarity, realism
+- Content must faithfully represent the user's description
+- Keep it concise but descriptive enough for AI video generation
+Return ONLY the enhanced prompt as plain text string, do NOT include JSON or explanation
+Based on the following user input: `
 
   
-// const ai = new GoogleGenAI({
-//     apiKey: process.env.GEMINI_API_KEY,
-//   });
+const ai = new GoogleGenAI({
+    apiKey: process.env.GEMINI_API_KEY,
+  });
 
   
 export async function POST(req){
@@ -30,35 +30,41 @@ export async function POST(req){
     try{
     const body = await req.json();  
     const userPrompt = body.formPrompt;
+let enhancedPrompt=userPrompt;
+    try{
+  const config = {
+    responseMimeType: 'text/plain',
+  };
+  const model = 'gemini-2.0-flash';
+  const contents = [
+    {
+      role: 'user',
+      parts: [
+        {
+          text: PROMPT + JSON.stringify(userPrompt),
+        },
+      ],
+    },
+  ];
 
-//   const config = {
-//     responseMimeType: 'text/plain',
-//   };
-//   const model = 'gemini-2.0-flash';
-//   const contents = [
-//     {
-//       role: 'user',
-//       parts: [
-//         {
-//           text: PROMPT + JSON.stringify(userPrompt),
-//         },
-//       ],
-//     },
-//   ];
-
-//   const response = await ai.models.generateContent({
-//     model,
-//     config,
-//     contents,
-//   });
+  const response = await ai.models.generateContent({
+    model,
+    config,
+    contents,
+  });
  
-//   const enhancedPrompt = response?.candidates?.[0]?.content?.parts?.[0]?.text || userPrompt;
+   enhancedPrompt = response?.candidates?.[0]?.content?.parts?.[0]?.text || userPrompt;
+}
+catch (geminiError){
+    console.error("Gemini error:", geminiError);
+    enhancedPrompt=userPrompt;
+}
 
 const input = {
     fps: 24,
     width: 1024,
     height: 576,
-    prompt: userPrompt,
+    prompt: enhancedPrompt,
     guidance_scale: 17.5,
     remove_watermark: true
 };
@@ -88,7 +94,7 @@ console.log(videoUrl);
   // Save to Database
 await db.insert(videosTable).values({
   prompt: userPrompt,        // user ka original / enhanced prompt
-  videoUrl:videoUrl , // JSON string of URLs
+  videoUrl:videoUrl , 
 });
 
  
