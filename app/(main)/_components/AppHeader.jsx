@@ -7,7 +7,7 @@ function AppHeader({hideSidebar=false}) {
     <div className="p-4 flex justify-between items-center shadow-sm">
      {!hideSidebar && <SidebarTrigger />}
 
-       <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 via-blue-400 to-pink-400 bg-clip-text text-transparent tracking-wide">
+       <span className="text-5xl font-bold bg-gradient-to-r from-purple-600 via-blue-400 to-pink-400 bg-clip-text text-transparent tracking-wide">
           MakeVideo AI
         </span>
     <Image

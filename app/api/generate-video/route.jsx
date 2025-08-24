@@ -7,6 +7,8 @@ import { db } from "@/config/db";
 import { videosTable } from "@/config/schema";
 import Replicate from "replicate";
 const replicate = new Replicate();
+import fetch from 'node-fetch';
+
 
 
 const PROMPT=`Create a short, high-quality cinematic video prompt that can be fed to a video generation AI. 
@@ -69,6 +71,9 @@ const input = {
     remove_watermark: true
 };
 
+
+
+
 let output=null;
 let videoUrl=null;
 let responseString=null;
@@ -78,15 +83,63 @@ try{
 
  videoUrl = Array.isArray(output) && output.length > 0 ? output[0] : null;
 
- responseString="Video Created, Check in Explore Videos Section";
+ responseString="Video Created by Replicate, Check in Explore Videos Section";
 }
 catch (replicateError) {
       // Replicate failed (likely credits expired)
       console.error("Replicate error:", replicateError);
+
+
+//Trying different text to Video generator AI API using stable fusion API ModelsLab
+
+try{
+console.log("Calling ModelsLab API...");
+    const apiKey = process.env.MODELSLAB_API;
+
+      const requestBody = {
+        "key": apiKey,
+          "model_id":"cogvideox",
+        "prompt": enhancedPrompt,
+         "height": 288,
+  "width": 512,
+  "num_frames": 25,             
+  "num_inference_steps": 20,
+  "guidance_scale": 7,
+  "upscale_height": 288,
+  "upscale_width": 512,
+  "upscale_strength": 0.6,
+  "upscale_guidance_scale": 12,
+  "upscale_num_inference_steps": 20,
+  "output_type": "mp4",
+  "webhook": null,
+  "track_id": null
+    };
+
+     const apiResponse = await fetch("https://modelslab.com/api/v6/video/text2video", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(requestBody)
+        });
+        
+        const data = await apiResponse.json();
+        console.log("ModelsLab API Response:", data);
+
+     if (data.status === "processing") {
+  videoUrl = data.future_links?.[0];
+} else {
+  videoUrl = data.output[0];
+}
+
+responseString="Video created by ModelsLab, Check in Explore Videos Section";
+}
+catch (ModelsLabError){
+   console.error("ModelsLabError error:", ModelsLabError);
+
       // Fallback video URL
       videoUrl = "https://www.w3schools.com/html/mov_bbb.mp4";
 
-       responseString="Replicate Credit Expired, Returned fallback video";
+       responseString="Replicate Credit Expired and ModelLabs API failed, Returned fallback video";
+}
     }
 
 console.log(videoUrl);
