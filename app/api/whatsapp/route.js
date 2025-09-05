@@ -444,6 +444,28 @@ async function deleteSpecificJob(client, fromNumber, jobId) {
   }
 }
 
+// Function to show help menu
+async function showHelpMenu(client, fromNumber) {
+  const helpMessage = 
+    "*MakeVideo AI Pro Help Menu*\n\n" +
+    "📝 *Basic Commands:*\n" +
+    "- Just send a text description to generate a video\n" +
+    "- /status - Check your most recent video request\n" +
+    "- /status [job-id] - Check a specific video request\n" +
+    "- /history - See your past video requests\n" +
+    "- /cancel [job-id] - Cancel a video that's being processed\n\n" +
+    "🔧 *Advanced Commands:*\n" +
+    "- /delete-history-videoid [job-id] - Delete a specific video from your history\n" +
+    "- /delete-history-all - Delete your entire video history\n" +
+    "- /forget-me - Remove all your data from our system\n" +
+    "- /help - Show this help menu\n\n" +
+    "Need more help? Contact support at +91 9753648274 or email at shubhrajput19194@gmail.com";
+  
+  await sendTwilioMessage(client, fromNumber, helpMessage);
+}
+
+
+
 
 
 // Helper function to send WhatsApp messages via Twilio
