@@ -15,4 +15,5 @@ export const WhatsAppjobsTable = pgTable("jobs", {
   status: text().notNull().default("pending"),    // pending -> processing -> completed / failed
   videoUrl: text(),                               // generated video ka URL
   createdAt: timestamp().defaultNow().notNull(),  // job creation time
+    updatedAt: timestamp().defaultNow().notNull(),  // last update time
 });

@@ -97,7 +97,7 @@ const JSONResp = JSON.parse(RawJson);
 
   case "clarify_prompt":
     // The prompt is too short. Send the suggestion with interactive buttons.
-    await sendTwilioInteractiveMessage(client,fromNumber, `🤔 Your prompt is a bit short. How about this instead: "${ResponseForUser}"`);
+    await sendTwilioMessage(client,fromNumber, `🤔 Your prompt is a bit short. How about this instead: "${ResponseForUser}"`);
     break;
     
   case "greeting":
@@ -365,7 +365,8 @@ async function cancelJob(client, fromNumber, jobId) {
     }
       // Update the job status to cancelled
     await db.update(WhatsAppjobsTable)
-      .set({ status: "cancelled" })
+      .set({ status: "cancelled" ,
+        updatedAt: new Date()  })
       .where(eq(WhatsAppjobsTable.id, jobId));
     
     await sendTwilioMessage(client, fromNumber, `✅ Job ${jobId} has been cancelled.`);
@@ -510,6 +511,50 @@ async function apologizeForFailedJob(client, fromNumber, jobData) {
 }
 
 
+// Helper function to format dates in a user-friendly way
+function formatDate(date) {
+  if (!date) return "Unknown";
+  
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  
+  const isToday = date.getDate() === today.getDate() && 
+                  date.getMonth() === today.getMonth() && 
+                  date.getFullYear() === today.getFullYear();
+  
+  const isYesterday = date.getDate() === yesterday.getDate() && 
+                      date.getMonth() === yesterday.getMonth() && 
+                      date.getFullYear() === yesterday.getFullYear();
+  
+  if (isToday) {
+    return `Today at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  } else if (isYesterday) {
+    return `Yesterday at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  } else {
+    return date.toLocaleString([], { 
+      day: '2-digit', 
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+}
+
+// Helper function to get emoji for status
+function getStatusEmoji(status) {
+  switch (status) {
+    case 'processing': return '🔄';
+    case 'completed': return '✅';
+    case 'failed': return '❌';
+    case 'cancelled': return '🚫';
+    default: return '❓';
+  }
+}
+
+
+
 // Helper function to send WhatsApp messages via Twilio
 async function sendTwilioMessage(client,toNumber, message, mediaUrls = []) {
 
@@ -583,7 +628,8 @@ try {
         await db.update(WhatsAppjobsTable)
             .set({ 
                 status: "completed", 
-                videoUrl: result.videoUrl || null 
+                videoUrl: result.videoUrl || null ,
+                 updatedAt: new Date()
             })
             .where(eq(WhatsAppjobsTable.id, jobId))
             .catch(error => {
@@ -604,6 +650,14 @@ try {
            );
          
     } else {
+       // Update job status to failed 
+    await db.update(WhatsAppjobsTable)
+        .set({ 
+            status: "failed",
+            updatedAt: new Date() 
+        })
+        .where(eq(WhatsAppjobsTable.id, jobId))
+        .catch(err => console.error("Failed to update job status:", err));
         // Something went wrong
         await sendTwilioMessage(
             client, 
@@ -613,6 +667,14 @@ try {
     }
 } catch (error) {
     console.error("Error calling video generation API:", error);
+     // Update job status to failed 
+    await db.update(WhatsAppjobsTable)
+        .set({ 
+            status: "failed",
+            updatedAt: new Date() 
+        })
+        .where(eq(WhatsAppjobsTable.id, jobId))
+        .catch(err => console.error("Failed to update job status:", err));
     await sendTwilioMessage(
         client, 
         fromNumber, 
