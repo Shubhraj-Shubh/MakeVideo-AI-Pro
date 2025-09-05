@@ -22,6 +22,15 @@ export async function POST(req) {
   
   console.log(`Message received from ${fromNumber}: "${incomingMsg}"`);
 
+ // Check if this is a command (starts with /)
+  if (incomingMsg && incomingMsg.startsWith('/')) {
+    await handleCommand(client, fromNumber, incomingMsg);
+    return new Response('<Response></Response>', { 
+      headers: { 'Content-Type': 'text/xml' } 
+    });
+  }
+
+
 //prompt for gemini
 const PROMPT=`You are an intelligent AI assistant for a WhatsApp bot named 'MakeVideo AI'. Your job is to understand the user's message and decide the correct next action.
 
@@ -125,6 +134,72 @@ catch (geminiError){
     headers: { 'Content-Type': 'text/xml' } 
   });
 }
+
+
+
+// Function to handle all commands
+async function handleCommand(client, fromNumber, message) {
+  const parts = message.trim().split(' ');
+  const command = parts[0].toLowerCase();
+  const parameters = parts.slice(1).join(' ');
+  
+  switch (command) {
+    case '/status':
+      // If no job ID provided, show the latest job status
+      if (!parameters) {
+        await showLastJobStatus(client, fromNumber);
+      } else {
+        await checkJobStatus(client, fromNumber, parameters);
+      }
+      break;
+      
+    case '/help':
+      // Show help message with all available commands
+      await showHelpMenu(client, fromNumber);
+      break;
+      
+    case '/history':
+      // Show user's request history
+      await showUserHistory(client, fromNumber);
+      break;
+
+        case '/cancel':
+      // Cancel a job
+      const cancelJobId = parameters;
+      if (!cancelJobId) {
+        await sendTwilioMessage(client, fromNumber, "Please provide a job ID to cancel. For example: /cancel abc123");
+        return;
+      }
+      await cancelJob(client, fromNumber, cancelJobId);
+      break;
+      
+    case '/delete-history-all':
+      // Delete all user history
+      await deleteAllUserHistory(client, fromNumber);
+      break;
+      
+    case '/forget-me':
+      // Delete all user data
+      await forgetUserData(client, fromNumber);
+      break;
+      
+    case '/delete-history-videoid':
+      // Delete specific video history
+      const deleteJobId = parameters;
+      if (!deleteJobId) {
+        await sendTwilioMessage(client, fromNumber, "Please provide a job ID to delete. For example: /delete-history-videoid abc123");
+        return;
+      }
+      await deleteSpecificJob(client, fromNumber, deleteJobId);
+      break;
+
+       default:
+      await sendTwilioMessage(client, fromNumber, "Unknown command. Type /help to see available commands.");
+  }
+}
+
+
+
 
 
 
