@@ -296,6 +296,48 @@ async function checkJobStatus(client, fromNumber, jobId) {
 }
 
 
+// Function to handle user history
+async function showUserHistory(client, fromNumber) {
+  try {
+    // Get up to 10 most recent jobs for this user
+    const jobs = await db
+      .select()
+      .from(WhatsAppjobsTable)
+      .where(eq(WhatsAppjobsTable.userPhone, fromNumber))
+      .orderBy(desc(WhatsAppjobsTable.createdAt))
+      .limit(10);
+    
+    if (!jobs || jobs.length === 0) {
+      await sendTwilioMessage(client, fromNumber, "You haven't created any videos yet. Send me a description to get started!");
+      return;
+    }
+    
+    let historyMessage = "*Your Video History*\n\n";
+    
+    for (const job of jobs) {
+      const statusEmoji = getStatusEmoji(job.status);
+      const date = job.createdAt ? formatDate(new Date(job.createdAt)) : "Unknown date";
+      
+      historyMessage += `${statusEmoji} *${job.id}*\n`;
+       historyMessage += `📝 "${job.userPrompt.substring(0, 30)}${job.userPrompt.length > 30 ? '...' : ''}"\n`;
+      historyMessage += `📝 "${job.enhancedPrompt.substring(0, 30)}${job.enhancedPrompt.length > 30 ? '...' : ''}"\n`;
+      if(job.status==='completed' && job.videoUrl){
+         historyMessage += `🔗 VideoUrl: ${job.videoUrl}\n\n`;
+      }
+      historyMessage += `📅 ${date}\n\n`;
+    }
+    
+    historyMessage += "To see details for a specific video, send:\n/status [video-id]";
+    
+ await sendTwilioMessage(client, fromNumber, historyMessage);
+ 
+  } catch (error) {
+    console.error("Error retrieving user history:", error);
+    await sendTwilioMessage(client, fromNumber, "Sorry, I couldn't retrieve your history. Please try again.");
+  }
+}
+
+
 
 
 
