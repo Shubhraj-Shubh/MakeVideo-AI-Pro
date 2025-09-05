@@ -393,6 +393,25 @@ async function deleteAllUserHistory(client, fromNumber) {
 }
 
 
+// Function to forget user data
+async function forgetUserData(client, fromNumber) {
+  try {
+    // Delete all records for this user
+    await db.delete(WhatsAppjobsTable)
+      .where(eq(WhatsAppjobsTable.userPhone, fromNumber));
+    
+    // Note: We will make conversation history database later ,we will remove from that also after making that database
+
+    
+    
+    await sendTwilioMessage(client, fromNumber, "✅ All your data has been deleted from our system. Your chat history and video requests have been removed.");
+    
+  } catch (error) {
+    console.error("Error forgetting user data:", error);
+    await sendTwilioMessage(client, fromNumber, "Sorry, there was an error processing your request. Please try again.");
+  }
+}
+
 // Helper function to send WhatsApp messages via Twilio
 async function sendTwilioMessage(client,toNumber, message, mediaUrls = []) {
 
