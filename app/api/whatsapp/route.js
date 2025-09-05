@@ -377,6 +377,20 @@ async function cancelJob(client, fromNumber, jobId) {
 }
 
 
+// Function to delete all user history
+async function deleteAllUserHistory(client, fromNumber) {
+  try {
+    // Delete all records for this user
+    const result = await db.delete(WhatsAppjobsTable)
+      .where(eq(WhatsAppjobsTable.userPhone, fromNumber));
+    
+    await sendTwilioMessage(client, fromNumber, "✅ Your entire video history has been deleted. All your past requests have been removed from our system.");
+    
+  } catch (error) {
+    console.error("Error deleting user history:", error);
+    await sendTwilioMessage(client, fromNumber, "Sorry, there was an error deleting your history. Please try again.");
+  }
+}
 
 
 // Helper function to send WhatsApp messages via Twilio
