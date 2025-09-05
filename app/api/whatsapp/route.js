@@ -339,6 +339,43 @@ async function showUserHistory(client, fromNumber) {
 
 
 
+// Function to handle job cancellation
+async function cancelJob(client, fromNumber, jobId) {
+  try {
+    // Query the database for this job
+    const job = await db.select().from(WhatsAppjobsTable).where(eq(WhatsAppjobsTable.id, jobId)).limit(1);
+    
+    if (!job || job.length === 0) {
+      await sendTwilioMessage(client, fromNumber, `❌ No job found with ID: ${jobId}`);
+      return;
+    }
+    
+    const jobData = job[0];
+    
+    // Only allow cancellation if this is the user who created the job
+    if (jobData.userPhone !== fromNumber) {
+      await sendTwilioMessage(client, fromNumber, `⚠️ You don't have permission to cancel this job.`);
+      return;
+    }
+    
+    // Only allow cancellation if the job is still processing
+    if (jobData.status !== 'processing') {
+      await sendTwilioMessage(client, fromNumber, `⚠️ Cannot cancel job with status: ${jobData.status}`);
+      return;
+    }
+      // Update the job status to cancelled
+    await db.update(WhatsAppjobsTable)
+      .set({ status: "cancelled" })
+      .where(eq(WhatsAppjobsTable.id, jobId));
+    
+    await sendTwilioMessage(client, fromNumber, `✅ Job ${jobId} has been cancelled.`);
+    
+  } catch (error) {
+    console.error("Error cancelling job:", error);
+    await sendTwilioMessage(client, fromNumber, "Sorry, there was an error cancelling the job.");
+  }
+}
+
 
 
 
