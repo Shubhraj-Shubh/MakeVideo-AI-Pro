@@ -465,7 +465,49 @@ async function showHelpMenu(client, fromNumber) {
 }
 
 
+// Function for AI to apologize for failed jobs
+async function apologizeForFailedJob(client, fromNumber, jobData) {
+  const ai = new GoogleGenAI({
+    apiKey: process.env.GEMINI_API_KEY,
+  });
+  
+  try {
+    const prompt = `You are MakeVideo AI's customer service representative. A user's video generation has failed. 
+    
+    Their prompt was: "${jobData.userPrompt}"
+    Job ID: ${jobData.id}
+    
+    Write a short, apologetic message (max 3 sentences) explaining that their video couldn't be generated. 
+    Be empathetic but professional. Suggest they try again with a slightly different description. 
+    Do NOT mention any technical details or errors.`;
+    
+    const model = 'gemini-2.0-flash';
+    const contents = [{ role: 'user', parts: [{ text: prompt }] }];
+    
+    const response = await ai.models.generateContent({
+      model,
+      contents,
+      generationConfig: { maxOutputTokens: 200 }
+    });
+    
+    const apologyMessage = response.candidates[0].content.parts[0].text;
 
+ // Send the apology with the job status info
+    let statusMessage = `*Job Status: ${jobData.id}*\n`;
+    statusMessage += `💭 Prompt: "${jobData.userPrompt}"\n\n`;
+    statusMessage += `❌ ${apologyMessage}`;
+    
+    await sendTwilioMessage(client, fromNumber, statusMessage);
+    
+  } catch (error) {
+    console.error("Error generating apology:", error);
+    await sendTwilioMessage(
+      client, 
+      fromNumber, 
+      `❌ Sorry, we couldn't generate your video for prompt: "${jobData.userPrompt}". Please try again with a different description.`
+    );
+  }
+}
 
 
 // Helper function to send WhatsApp messages via Twilio
