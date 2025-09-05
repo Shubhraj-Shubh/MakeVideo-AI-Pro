@@ -4,8 +4,9 @@ import {
 } from '@google/genai';
 import twilio from 'twilio';
 import { randomUUID } from 'crypto';
-import { db } from '@/lib/db';
-import { jobs } from '@/config/schema';
+import { db } from '@/config/db';
+import { eq } from "drizzle-orm";
+import { WhatsAppjobsTable } from '@/config/schema';
 
 export async function POST(req) {
 
@@ -118,32 +119,7 @@ catch (geminiError){
 }
 
 
-
-
-
-
-
-
-
-
-
-  try {
-    // 3. Send a reply message back to the user
-    await client.messages.create({
-       body: `✅ Got it! You sent: "${incomingMsg}"`,
-        // This is the key part: mediaUrl must be an array with your video link
-// mediaUrl: ['https://pub-3626123a908346a7a8be8d9295f44e26.r2.dev/video_generations/891317ee-9619-4d7d-bc3f-4f5da7d29ea1.mp4','https://pub-3626123a908346a7a8be8d9295f44e26.r2.dev/video_generations/b6716f42-3518-4105-8f55-500fda5f99a8.mp4'],
-       from: 'whatsapp:+14155238886', // This is the fixed Twilio Sandbox Number
-       to: fromNumber // This sends the message back to the person who sent it
-     });
-
-  } catch (error) {
-    console.error("Failed to send Twilio message:", error);
-  }
-
-   
-  
-  
+     
   // 4. Send an empty response to Twilio to acknowledge receipt
   return new Response('<Response></Response>', { 
     headers: { 'Content-Type': 'text/xml' } 
@@ -169,8 +145,9 @@ async function sendTwilioMessage(client,toNumber, message, mediaUrls = []) {
     }
     
     // Send the message
-    const result = await client.messages.create(messageOptions);
-    console.log(`Message sent successfully. SID: ${result.sid}`);
+    // const result = await client.messages.create(messageOptions);
+    // console.log(`Message sent successfully. SID: ${result.sid}`);
+    console.log(`Message sent successfully for testing. ${messageOptions?.body} and ${messageOptions.mediaUrl}`);
   
   } catch (error) {
     console.error("Failed to send Twilio message:", error);
@@ -195,7 +172,7 @@ async function generateVideoInBackground(client, fromNumber, incomingMsg, Respon
     console.log(`Job created with ID: ${jobId}`);
 
     // Step 3: Insert the new job record into the database
-   await db.insert(jobs).values(newJob).catch(error => {
+   await db.insert(WhatsAppjobsTable).values(newJob).catch(error => {
         console.error("Failed to insert job into database:", error);
     });
 
@@ -203,6 +180,63 @@ const confirmationMessage = `✅ Your request has been received! I've started wo
 await sendTwilioMessage(client,fromNumber, confirmationMessage);
 
     
+    // Step 4: Call the existing video generation API endpoint
+try {
+    const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+    const response = await fetch(`${baseUrl}/api/generate-video`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+            formPrompt: ResponseForUser,
+            jobId: jobId,
+            source: 'whatsapp'
+        })
+    });
+
+    const result = await response.json();
     
+    if (result.success) {
+        // Update job status
+        await db.update(WhatsAppjobsTable)
+            .set({ 
+                status: "completed", 
+                videoUrl: result.videoUrl || null 
+            })
+            .where(eq(WhatsAppjobsTable.id, jobId))
+            .catch(error => {
+                console.error("Failed to update job status:", error);
+            });
+        
+        // Send the video to the user
+        await sendTwilioMessage(
+            client, 
+            fromNumber, 
+            "✨ Your video is ready! Here it is:",
+            [result.videoUrl || "https://pub-3626123a908346a7a8be8d9295f44e26.r2.dev/video_generations/b6716f42-3518-4105-8f55-500fda5f99a8.mp4"]
+        );
+  await sendTwilioMessage(
+            client, 
+            fromNumber, 
+         `✅ All done! Here's the video you asked for. ✨\n\nIf you need to reference it later, your Job ID is: ${jobId}`
+           );
+         
+    } else {
+        // Something went wrong
+        await sendTwilioMessage(
+            client, 
+            fromNumber, 
+            "Sorry, there was an issue generating your video. Please try again."
+        );
+    }
+} catch (error) {
+    console.error("Error calling video generation API:", error);
+    await sendTwilioMessage(
+        client, 
+        fromNumber, 
+        "Sorry, there was an error processing your request."
+    );
+}
 
 }

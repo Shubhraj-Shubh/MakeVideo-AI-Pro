@@ -34,7 +34,7 @@ export default function ReqForm() {
 }
     setLoading(false);
     // console.log("Done")
-    toast.success(result.data || "Video Created!");
+    toast.success(result.data.message || "Video Created!");
   }
   catch (e){
     setLoading(false);

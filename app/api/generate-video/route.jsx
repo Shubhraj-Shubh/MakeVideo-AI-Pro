@@ -103,10 +103,10 @@ async function fetchVideoResult(fileId) {
   
 export async function POST(req){
 
-    try{
-
 
     const body = await req.json();  
+    try{
+
     const userPrompt = body.formPrompt;
 let enhancedPrompt=userPrompt;
 
@@ -251,7 +251,7 @@ catch (ModelsLabError){
    console.error("ModelsLabError error:", ModelsLabError);
 
       // Fallback video URL
-      videoUrl = "https://www.w3schools.com/html/mov_bbb.mp4";
+      videoUrl = "https://pub-3626123a908346a7a8be8d9295f44e26.r2.dev/video_generations/b6716f42-3518-4105-8f55-500fda5f99a8.mp4";
 
        responseString="Replicate Credit Expired and ModelLabs API failed, Returned fallback video";
 }
@@ -267,10 +267,21 @@ await db.insert(videosTable).values({
 });
 
  
-  return NextResponse.json(responseString);
+  return NextResponse.json({
+  message: responseString,
+  videoUrl: videoUrl,
+  jobId: body.jobId || null, // If jobId was provided in request, return it
+  success: true
+});
     } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
+    return NextResponse.json({ 
+    error: error.message || "Internal Server Error", 
+    message: "Video generation failed",
+    videoUrl: null,
+    jobId: body.jobId || null,
+    success: false 
+  }, { status: 500 });
   }
 }
 
