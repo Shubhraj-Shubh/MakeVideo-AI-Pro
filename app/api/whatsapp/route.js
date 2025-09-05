@@ -200,6 +200,102 @@ async function handleCommand(client, fromNumber, message) {
 
 
 
+// Show the latest job status when user sends just "/status"
+async function showLastJobStatus(client, fromNumber) {
+  try {
+    // Get the most recent job for this user
+    const jobs = await db
+      .select()
+      .from(WhatsAppjobsTable)
+      .where(eq(WhatsAppjobsTable.userPhone, fromNumber))
+      .orderBy(desc(WhatsAppjobsTable.createdAt))
+      .limit(1);
+    
+    if (!jobs || jobs.length === 0) {
+      await sendTwilioMessage(client, fromNumber, "You haven't created any videos yet. Send me a description to get started!");
+      return;
+    }
+    
+    // Use the checkJobStatus function to show details for the most recent job
+    await checkJobStatus(client, fromNumber, jobs[0].id);
+    
+  } catch (error) {
+    console.error("Error retrieving last job status:", error);
+    await sendTwilioMessage(client, fromNumber, "Sorry, I couldn't retrieve your latest job status. Please try again.");
+  }
+}
+
+
+// Function to check job status (enhanced with timing information)
+async function checkJobStatus(client, fromNumber, jobId) {
+  try {
+    // Query the database for this job
+    const job = await db.select().from(WhatsAppjobsTable).where(eq(WhatsAppjobsTable.id, jobId)).limit(1);
+    
+    if (!job || job.length === 0) {
+      await sendTwilioMessage(client, fromNumber, `❌ No job found with ID: ${jobId}`);
+      return;
+    }
+    
+    const jobData = job[0];
+    
+    // Only show details if this is the user who created the job
+    if (jobData.userPhone !== fromNumber) {
+      await sendTwilioMessage(client, fromNumber, `⚠️ You don't have permission to view this job.`);
+      return;
+    }
+    
+    const creationTime = jobData.createdAt ? new Date(jobData.createdAt) : null;
+    const completionTime = jobData.updatedAt ? new Date(jobData.updatedAt) : null;
+    
+    let timeInfo = "";
+    if (creationTime) {
+      timeInfo = `\n📅 Created: ${formatDate(creationTime)}`;
+      
+      if (completionTime && jobData.status === "completed") {
+        const processingTime = Math.round((completionTime - creationTime) / 1000);
+        timeInfo += `\n⏱️ Processing time: ${processingTime} seconds`;
+      }
+    }
+
+     let statusMessage = `*Job Status: ${jobId}*\n`;
+      statusMessage += `💭 Prompt: "${jobData.userPrompt}"\n`;
+    statusMessage += `💭 enhancedPrompt: "${jobData.enhancedPrompt}"\n`;
+    statusMessage += timeInfo + "\n\n";
+    
+    switch (jobData.status) {
+      case 'processing':
+        statusMessage += "🔄 Your video is currently being generated. This typically takes 1-2 minutes.";
+        break;
+      case 'completed':
+        statusMessage += "✅ Your video has been completed!";
+        if (jobData.videoUrl) {
+          await sendTwilioMessage(client, fromNumber, statusMessage);
+          await sendTwilioMessage(client, fromNumber, "Here's your video:", [jobData.videoUrl]);
+          return;
+        } else {
+          statusMessage += "\n\nThe video URL is not available. Please contact support.";
+        }
+        break;
+      case 'failed':
+        // For failed jobs, let's ask AI to apologize
+        await apologizeForFailedJob(client, fromNumber, jobData);
+        return;
+      case 'cancelled':
+        statusMessage += "🚫 This job was cancelled.";
+        break;
+      default:
+        statusMessage += `Current status: ${jobData.status}`;
+    }
+     await sendTwilioMessage(client, fromNumber, statusMessage);
+    
+  } catch (error) {
+    console.error("Error checking job status:", error);
+    await sendTwilioMessage(client, fromNumber, "Sorry, there was an error checking the job status.");
+  }
+}
+
+
 
 
 
