@@ -402,7 +402,7 @@ async function forgetUserData(client, fromNumber) {
     
     // Note: We will make conversation history database later ,we will remove from that also after making that database
 
-    
+
     
     await sendTwilioMessage(client, fromNumber, "✅ All your data has been deleted from our system. Your chat history and video requests have been removed.");
     
@@ -411,6 +411,40 @@ async function forgetUserData(client, fromNumber) {
     await sendTwilioMessage(client, fromNumber, "Sorry, there was an error processing your request. Please try again.");
   }
 }
+
+
+// Function to delete a specific job
+async function deleteSpecificJob(client, fromNumber, jobId) {
+  try {
+    // Query the database for this job
+    const job = await db.select().from(WhatsAppjobsTable).where(eq(WhatsAppjobsTable.id, jobId)).limit(1);
+    
+    if (!job || job.length === 0) {
+      await sendTwilioMessage(client, fromNumber, `❌ No job found with ID: ${jobId}`);
+      return;
+    }
+    
+    const jobData = job[0];
+    
+    // Only allow deletion if this is the user who created the job
+    if (jobData.userPhone !== fromNumber) {
+      await sendTwilioMessage(client, fromNumber, `⚠️ You don't have permission to delete this job.`);
+      return;
+    }
+    
+    // Delete the job
+    await db.delete(WhatsAppjobsTable)
+      .where(eq(WhatsAppjobsTable.id, jobId));
+    
+    await sendTwilioMessage(client, fromNumber, `✅ Job ${jobId} has been deleted from your history.`);
+    
+  } catch (error) {
+    console.error("Error deleting job:", error);
+    await sendTwilioMessage(client, fromNumber, "Sorry, there was an error deleting the job. Please try again.");
+  }
+}
+
+
 
 // Helper function to send WhatsApp messages via Twilio
 async function sendTwilioMessage(client,toNumber, message, mediaUrls = []) {
