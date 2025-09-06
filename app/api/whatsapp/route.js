@@ -702,8 +702,8 @@ async function sendTwilioMessage(client,toNumber, message, mediaUrls = []) {
 
 
     // Send the message
-    // const result = await client.messages.create(messageOptions);
-    // console.log(`Message sent successfully. SID: ${result.sid}`);
+    const result = await client.messages.create(messageOptions);
+    console.log(`Message sent successfully. SID: ${result.sid}`);
     console.log(`Message sent successfully for testing. ${messageOptions?.body} and ${messageOptions.mediaUrl}`);
   
   } catch (error) {
