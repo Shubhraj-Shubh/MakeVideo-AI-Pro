@@ -386,7 +386,7 @@ async function showUserHistory(client, fromNumber) {
       .from(WhatsAppjobsTable)
       .where(eq(WhatsAppjobsTable.userPhone, fromNumber))
       .orderBy(desc(WhatsAppjobsTable.createdAt))
-      .limit(10);
+      .limit(3);
     
     if (!jobs || jobs.length === 0) {
       await sendTwilioMessage(client, fromNumber, "You haven't created any videos yet. Send me a description to get started!");
@@ -400,8 +400,8 @@ async function showUserHistory(client, fromNumber) {
       const date = job.createdAt ? formatDate(new Date(job.createdAt)) : "Unknown date";
       
       historyMessage += `${statusEmoji} *${job.id}*\n`;
-       historyMessage += `📝UserPrompt: "${job.userPrompt.substring(0, 30)}${job.userPrompt.length > 30 ? '...' : ''}"\n`;
-      historyMessage += `📝EnhancedPrompt: "${job.enhancedPrompt.substring(0, 30)}${job.enhancedPrompt.length > 30 ? '...' : ''}"\n`;
+        historyMessage += `📝UserPrompt: "${job.userPrompt.substring(0, 30)}${job.userPrompt.length > 30 ? '...' : ''}"\n`;
+       historyMessage += `📝EnhancedPrompt: "${job.enhancedPrompt.substring(0, 30)}${job.enhancedPrompt.length > 30 ? '...' : ''}"\n`;
       if(job.status==='completed' && job.videoUrl){
          historyMessage += `🔗 VideoUrl: ${job.videoUrl}\n\n`;
       }
