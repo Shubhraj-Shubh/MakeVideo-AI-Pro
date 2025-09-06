@@ -1,221 +1,236 @@
-# MakeVideo AI — Text-to-Video Generator
-Deployed Link-https://make-video-ai.vercel.app/
-MakeVideo AI is a full-stack, AI-powered video generation platform that transforms simple text prompts into cinematic video clips. Built with a modern tech stack including Next.js, Tailwind CSS, and Drizzle ORM with a PostgreSQL database, this application demonstrates a complete end-to-end workflow from user input to final output.
-The backend leverages a multi-stage pipeline, first enhancing user prompts with the Google Gemini API for richer detail, then generating video content via the Replicate API and ModelLabs API. The result is a seamless and responsive user experience with a beautiful UI for generating, exploring, and saving AI-created videos.
+# MakeVideo AI Pro — WhatsApp Text-to-Video Generator Bot
+
+## 📱 Overview
+
+**MakeVideo AI Pro** is a WhatsApp-based AI service that transforms text descriptions into cinematic videos — all through simple chat messages. Built as an extension of the original MakeVideo AI web platform, this integration brings AI video generation directly to WhatsApp, making creative video production accessible to everyone with a smartphone.
+
+Simply send a text description to our WhatsApp number, and the AI will process your request, generate a high-quality video, and send it back within minutes — all in a natural, conversational interface.
 
 ---
 
-## 📷 Screenshots
+## ✨ Key Features
 
-> Landing Page<img width="1900" height="905" alt="Screenshot 2025-08-24 084458" src="https://github.com/user-attachments/assets/f371f9b6-cc9f-4445-8063-d80ba2e7cbf7" />
+### 💬 Conversational Interface
+- **Natural Language:** Describe any video concept in plain language
+- **Conversational Memory:** Bot remembers previous interactions for better context
+- **Smart Suggestions:** Automatically suggests improvements for vague prompts
+- **Command System:** Comprehensive set of commands for managing your videos
 
-> Dashboard<img width="1915" height="905" alt="Screenshot 2025-08-24 084517" src="https://github.com/user-attachments/assets/d39a6011-f6fe-42f8-aeef-5235f99b0f72" />
+### 🎬 Advanced Video Generation
+- **Triple-Provider Pipeline:** Uses Minimax, Replicate, and ModelsLab for reliable generation
+- **High Fault Tolerance:** Multiple fallback mechanisms ensure you always get a response
+- **Prompt Enhancement:** AI-powered improvements to your video descriptions
+- **Asynchronous Processing:** Background generation with real-time status updates
 
-> Explore Videos<img width="1897" height="906" alt="Screenshot 2025-08-24 084556" src="https://github.com/user-attachments/assets/1ac2a753-95e6-4826-b2bb-9cb7944682f8" />
+### 🧠 Intelligent Experience
+- **Request Management:** Track, cancel, and review all your video requests
+- **Privacy Controls:** Clear your chat history or delete all your data
+- **Detailed Status Updates:** Follow your video's progress from start to finish
+- **Personal Video Library:** Build and manage your collection of AI-generated videos
 
 ---
 
-## 🚀 Features
+## 🤖 Command Reference
 
-- **Intelligent Video Generation Pipeline:**  
- Takes a user's simple idea and first enhances it for more cinematic results using the Google Gemini API. The enhanced prompt is then sent to a primary AI video model, with built-in, cascading fallbacks to a secondary model and a placeholder video to ensure a 100% success rate during the demo.
-- **Persistent Storage & Personal Collections:**  
-  All successfully generated videos are saved to a PostgreSQL database for a public "Explore" feed. Users can also curate a personal "My Collection" of their favorite videos, which is saved locally in the browser's localStorage for instant, personalized access.
-- **Modern & Responsive UI/UX:**  
- Built with shadcn/ui and Tailwind CSS, the interface features a clean, gradient-rich, and fully responsive design. The user experience is enhanced with smooth animations, clear loading states, and non-intrusive toast notifications for all major actions.
-- **Custom Branding:**  
-  Includes a unique, custom-designed logo and favicon for a polished, product-like feel.
+| Command                | Description                                      |
+|------------------------|--------------------------------------------------|
+| `/status`              | Check your most recent video request             |
+| `/status [job-id]`     | Check a specific video request                   |
+| `/history`             | View your past video requests                    |
+| `/cancel [job-id]`     | Cancel a processing video                        |
+| `/delete-history-videoid [job-id]` | Delete a specific video              |
+| `/delete-history-all`  | Clear your entire video history                  |
+| `/forget-me`           | Remove all your data from our system             |
+| `/clear-chat`          | Delete only chat history, keep videos            |
+| `/privacy`             | View our privacy policy                          |
+| `/help`                | Show all available commands                      |
 
 ---
 
-## 🗂️ Project Structure
+## 🛠️ Technical Architecture
 
-```
-MakeVideo-AI/
-│
-├── .gitignore                  # Specifies files for Git to ignore (e.g., node_modules, .env)
-├── README.md                   # Your project's documentation file
-│
-├── app/                        # The main application folder (Next.js App Router)
-│   ├── (main)/                 # A route group for the main, protected part of the app
-│   │   ├── _components/        # Reusable React components for the main layout
-│   │   │   ├── AppHeader.jsx   # The header component with navigation
-│   │   │   ├── AppSidebar.jsx  # The sidebar component
-│   │   │   ├── ReqForm.jsx     # The main form for submitting the video prompt
-│   │   │   ├── VideoCard.jsx   # Component to display a single generated video
-│   │   │   └── WelcomeBanner.jsx # The banner on the dashboard
-│   │   ├── allVideos/
-│   │   │   └── page.jsx        # The page for exploring all videos from the database
-│   │   ├── dashboard/
-│   │   │   └── page.jsx        # The main dashboard page where users generate videos
-│   │   ├── layout.jsx          # The layout for the main section (includes header/sidebar)
-│   │   └── myVideos/
-│   │   │   └── page.jsx        # The page for viewing videos saved to localStorage
-│   │
-│   ├── api/                    # Backend API routes
-│   │   ├── generate-video/
-│   │   │   └── route.jsx       # API endpoint to handle video generation
-│   │   └── get-videos/
-│   │   │   └── route.jsx       # API endpoint to fetch all videos from the database
-│   │
-│   ├── favicon.ico             # The small icon for the browser tab
-│   ├── globals.css             # Global styles applied to the entire application
-│   ├── layout.js               # The root layout for the entire application
-│   └── page.js                 # The public landing/homepage
-│
-├── components/                 # UI components folder
-│   └── ui/                     # Low-level, reusable UI primitives from shadcn/ui
-│       ├── button.jsx
-│       └── ...                 # (e.g., Skeleton, Input, Form, etc.)
-│
-├── config/                     # Configuration files
-│   ├── db.jsx                  # Drizzle ORM database connection setup
-│   └── schema.js               # Drizzle ORM schema (defines database tables)
-│
-├── drizzle.config.js           # Configuration file for Drizzle ORM
-├── hooks/
-│   └── use-mobile.js           # A custom React hook to check for mobile screen sizes
-├── lib/
-│   └── utils.js                # General utility functions (e.g., for Tailwind CSS class merging)
-│
-├── next.config.mjs             # Main configuration file for Next.js
-├── package.json                # Lists project dependencies and scripts
-├── postcss.config.mjs          # Configuration for PostCSS (used with Tailwind)
-│
-└── public/                     # Folder for static assets (images, videos, etc.)
-    ├── ...mp4                  # Placeholder or demo video files
-    └── Make_Video_logo.png     # The application's logo
+MakeVideo AI Pro integrates Twilio's WhatsApp API with a sophisticated AI pipeline:
+
+1. **Message Reception:** User messages arrive via Twilio webhook
+2. **Intent Analysis:** Google Gemini 2.0 analyzes and classifies user intent
+3. **Context Retrieval:** Previous conversation history provides context
+4. **Video Generation:** Multi-provider approach with cascading fallbacks:
+    - Minimax → Replicate → ModelsLab → Fallback video
+5. **Response Delivery:** Generated videos and messages sent via Twilio
+6. **Data Persistence:** PostgreSQL database stores conversations and videos
+
+---
+
+### Data Schema
+
+```js
+// Jobs tracking table
+export const WhatsAppjobsTable = pgTable("jobs", {
+  id: text().primaryKey(),                      // UUID as primary key
+  userPhone: text().notNull(),                  // User's WhatsApp number
+  userPrompt: text().notNull(),                 // Original prompt
+  enhancedPrompt: text(),                       // AI-enhanced prompt
+  status: text().notNull().default("pending"),  // pending → processing → completed/failed
+  videoUrl: text(),                             // Generated video URL
+  createdAt: timestamp().defaultNow().notNull(),// Creation timestamp
+  updatedAt: timestamp().defaultNow().notNull(),// Last update timestamp
+});
+
+// Conversation history table
+export const ConversationHistoryTable = pgTable("conversation_history", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  userPhone: text().notNull(),                  // User's WhatsApp number
+  role: text().notNull(),                       // "user" or "assistant"
+  message: text().notNull(),                    // Message content
+  timestamp: timestamp().defaultNow().notNull(),// Message timestamp
+});
 ```
 
 ---
 
-## ⚡ Quick Start
+## 💻 Technology Stack
 
-### 1. **Clone the Repository**
-```sh
-git clone https://github.com/Shubhraj-Shubh/MakeVideo-AI.git
-cd makevideo-ai
-```
+- **Frontend:** WhatsApp messaging interface
+- **Backend:** Next.js, Node.js API routes
+- **Database:** PostgreSQL with Drizzle ORM
+- **AI Services:**
+    - Google Gemini 2.0 (conversation understanding)
+    - Minimax (primary video generation)
+    - Replicate (secondary video generation)
+    - ModelsLab (tertiary video generation)
+- **Messaging:** Twilio WhatsApp API
+- **Deployment:** Vercel
 
-### 2. **Install Dependencies**
-```sh
-npm install
-```
+---
 
-### 3. **Configure Environment Variables**
+## ⚡ Getting Started
 
-Create a `.env` file in the root directory:
+### Prerequisites
+
+- Node.js v18+
+- PostgreSQL database
+- Twilio account with WhatsApp sandbox
+- API keys (Google Gemini, Minimax, Replicate, ModelsLab)
+
+### Environment Setup
+
+Create a `.env` file with:
 
 ```
 DATABASE_URL=your_postgres_connection_url
 REPLICATE_API_TOKEN=your_replicate_api_key
 GEMINI_API_KEY=your_google_gemini_api_key
 MODELSLAB_API=your_modelslab_api_key
+MINIMAX_API_KEY=your_minimax_api_key
+TWILIO_ACCOUNT_SID=your_twilio_account_sid
+TWILIO_AUTH_TOKEN=your_twilio_auth_token
+BASE_URL=your_base_url_for_webhook
 ```
 
-### 4. **Run Database Migrations**
-Drizzle ORM will use your schema to manage the database.
+### Installation & Setup
 
-```sh
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/makevideo-ai-pro.git
+cd makevideo-ai-pro
+
+# Install dependencies
+npm install
+
+# Set up database schema
 npx drizzle-kit push
-```
 
-### 5. **Start the Development Server**
-```sh
+# Start development server
 npm run dev
+
+# Set Twilio webhook URL to:
+# https://your-domain.com/api/whatsapp
 ```
-Visit [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 🛠️ Deployment
+## 🔍 Implementation Highlights
 
-- **Vercel:**  
-  This project is Next.js 15+ compatible and deploys easily to Vercel.
-- **Environment Variables:**  
-  Set all required API keys and database URLs in your Vercel dashboard.
-- **Database:**  
-  Use NeonDB, Supabase, or any PostgreSQL provider.
+### RAG-Based Conversation Memory
 
----
+The bot implements Retrieval-Augmented Generation to maintain context:
 
-## 📚 API Documentation
+```js
+// Retrieve recent conversation history
+const recentMessages = await getRecentConversation(fromNumber, 5);
+const conversationContext = formatConversationForGemini(recentMessages);
 
-### **POST `/api/generate-video`**
-- **Body:** `{ formPrompt: string }`
-- **Response:**  
-  - Success: `{ message: "Video Created...", videoUrl: "..." }`
-  - Error: `{ error: "..." }`
-- **Logic:**  
-  - Enhances prompt with Gemini.
-  - Tries Replicate for video generation.
-  - Tries ModelsLab for short video genration.
-  - Returns default video if needed.
-  - Saves videoUrl and prompt to DB.
+// Add context to prompt for Gemini
+const PROMPT = `
+  ...
+  Recent conversation:
+  ${conversationContext}
 
-### **GET `/api/get-videos`**
-- **Response:**  
-  - Array of all videos `{ id, prompt, videoUrl }`
+  User's latest message: "${incomingMsg}"
+`;
+```
 
----
+### Multi-Provider Video Pipeline
 
-## 🧩 Components
-
-- **ReqForm:**  
-  Textarea for prompt input, gradient styling, responsive, calls API.
-- **WelcomeBanner:**  
-  Rotating taglines, gradient background, animated.
-- **VideoCard:**  
-  Shows video, save/unsave to localStorage, responsive, toast feedback.
-- **AppHeader/AppSidebar:**  
-  Navigation, sidebar, branding.
-- **Skeleton:**  
-  Loading placeholder for videos.
-
----
-
-## 💡 Customization
-
-- **UI Colors:**  
-  Easily change gradients and colors in Tailwind classes.
-- **Video Model:**  
-  Use Replicate/ModelsLab endpoints as needed.
-- **Database:**  
-  Extend schema for more metadata (user, likes, etc).
+```js
+try {
+  // Try Minimax first
+  const taskId = await invokeVideoGeneration(enhancedPrompt);
+  // Polling logic...
+  videoUrl = await fetchVideoResult(fileId);
+} catch(MinimaxError) {
+  try {
+    // Try Replicate second
+    videoUrl = await generateVideoWithReplicate(enhancedPrompt);
+  } catch(ReplicateError) {
+    try {
+      // Try ModelsLab third
+      videoUrl = await generateVideoWithModelsLab(enhancedPrompt);
+    } catch(ModelsLabError) {
+      // Fallback video as last resort
+      videoUrl = "https://fallback-video-url.mp4";
+    }
+  }
+}
+```
 
 ---
 
-## 📋 Prerequisites
+## ❓ FAQ
 
-Before you begin, ensure you have the following installed:
-- [Node.js](https://nodejs.org/) (v18 or later)
-- [npm](https://www.npmjs.com/) 
-- A [PostgreSQL](https://www.postgresql.org/) database (you can get one for free from NeonDB or Supabase)
+**Q: What phone number do I use to access the bot?**  
+A: Contact the developer for the current WhatsApp sandbox number and join code.
+
+**Q: How long does video generation take?**  
+A: Typically 30–90 seconds, depending on system load and which provider is used.
+
+**Q: Is there a limit to how many videos I can generate?**  
+A: Currently no user-facing limit, but API rate limits may apply.
+
+**Q: Is my conversation data private?**  
+A: Yes. Your data is stored only for functionality purposes. Use `/privacy` for details or `/forget-me` to delete all your data.
+
+**Q: What if the video generation fails?**  
+A: The system tries multiple providers in sequence. If all fail, you'll receive a fallback video.
+
+**Q: Can I use this in WhatsApp groups?**  
+A: Currently the bot only supports 1-on-1 conversations.
+
+---
+
+## 🔗 Related Projects
+
+- [Previous MakeVideo AI Web Platform](https://github.com/Shubhraj-Shubh/MakeVideo-AI)
 
 ---
 
 ## 👤 Credits
 
-Made by Shubhraj  
-Powered by Next.js, Replicate, Google Gemini, Drizzle ORM, Tailwind CSS.
+Developed by Shubhraj Singh Dodiya  
+Built with Next.js, Twilio, Google Gemini, Minimax, Replicate, and ModelsLab
 
 ---
 
+## 📧 Contact
 
-## ❓ FAQ
-
-- **Q:** Why fallback video?  
-  **A:** If Replicate/ModelsLab credits expire, users still get a demo video.
-
-- **Q:** How are videos stored?  
-  **A:** In PostgreSQL via Drizzle ORM.
-
-- **Q:** Can I use my own video model?  
-  **A:** Yes, update the API route logic.
-
----
-
-
-
-
-
+For support or inquiries: shubhrajput19194@gmail.com
