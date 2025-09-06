@@ -248,10 +248,23 @@ async function handleCommand(client, fromNumber, message) {
       break;
       
     case '/forget-me':
-      // Delete all user data
+      // Delete all user data (videos and conversation)
       await forgetUserData(client, fromNumber);
       break;
       
+
+          case '/clear-chat':
+      // Delete only conversation history
+      await clearChatHistory(client, fromNumber);
+      break;
+      
+    case '/privacy':
+      // Show privacy policy
+      await showPrivacyPolicy(client, fromNumber);
+      break;
+      
+
+
     case '/delete-history-videoid':
       // Delete specific video history
       const deleteJobId = parameters;
@@ -471,7 +484,8 @@ async function forgetUserData(client, fromNumber) {
       .where(eq(WhatsAppjobsTable.userPhone, fromNumber));
     
     // Note: We will make conversation history database later ,we will remove from that also after making that database
-
+ // Delete conversation history
+    await deleteConversationHistory(fromNumber);
 
     
     await sendTwilioMessage(client, fromNumber, "✅ All your data has been deleted from our system. Your chat history and video requests have been removed.");
@@ -569,7 +583,9 @@ async function showHelpMenu(client, fromNumber) {
     "🔧 *Advanced Commands:*\n" +
     "- /delete-history-videoid [job-id] - Delete a specific video from your history\n" +
     "- /delete-history-all - Delete your entire video history\n" +
-    "- /forget-me - Remove all your data from our system\n" +
+    "- /forget-me - Remove all your data (videos & chat) from our system\n" +
+    "- /clear-chat - Delete only your chat history, keep your videos\n" +
+    "- /privacy - View our privacy policy\n" +
     "- /help - Show this help menu\n\n" +
     "Need more help? Contact support at +91 9753648274 or email at shubhrajput19194@gmail.com";
   
