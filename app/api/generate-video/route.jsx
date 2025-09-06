@@ -238,13 +238,27 @@ console.log("Calling ModelsLab API...");
         const data = await apiResponse.json();
         console.log("ModelsLab API Response:", data);
 
-     if (data.status === "processing") {
-  videoUrl = data.future_links?.[0];
-} else {
-  videoUrl = data.output[0];
-}
+  if (data.status === "processing" && data.future_links && data.future_links.length > 0) {
+    videoUrl = data.future_links[0];
+    
+    console.log("ModelsLab processing started. Future URL:", videoUrl);
+    console.log("Waiting 3 minutes for processing to complete...");
+    
+    // Wait for 3 minutes (180,000 milliseconds)
+    await new Promise(resolve => setTimeout(resolve, 180000));
+    
+    console.log("3-minute wait completed. Using the future URL.");
+  } else if (data.output && data.output.length > 0) {
+    // If we get an immediate result (rare case)
+    videoUrl = data.output[0];
+    console.log("ModelsLab returned immediate result:", videoUrl);
+  } else {
+    throw new Error("ModelsLab didn't return a valid URL");
+  }
 
 responseString="Video created by ModelsLab, Check in Explore Videos Section";
+
+
 }
 
 catch (ModelsLabError){
@@ -253,7 +267,7 @@ catch (ModelsLabError){
       // Fallback video URL
       videoUrl = "https://pub-3626123a908346a7a8be8d9295f44e26.r2.dev/video_generations/b6716f42-3518-4105-8f55-500fda5f99a8.mp4";
 
-       responseString="Replicate Credit Expired and ModelLabs API failed, Returned fallback video";
+       responseString="Minimax Credit expired, Replicate Credit Expired and ModelLabs API failed, Returned fallback video";
 }
     }
   }
