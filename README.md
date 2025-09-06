@@ -8,6 +8,20 @@ Simply send a text description to our WhatsApp number, and the AI will process y
 
 ---
 
+## 🚀 Live Demo & Walkthrough
+
+You can test the live applications and watch a complete video walkthrough of the projects at the links below.
+
+### MakeVideo AI Pro
+* **Live Deployed App:** **[https://make-video-ai-pro.vercel.app](https://make-video-ai-pro.vercel.app)**
+* **Video Walkthrough:** **[https://drive.google.com/file/d/104IrRDsPsj8gaZqff4_e51OUp05FfBUh/view](https://drive.google.com/file/d/104IrRDsPsj8gaZqff4_e51OUp05FfBUh/view)**
+
+### MakeVideo AI
+* **Live Deployed App:** **[https://make-video-ai.vercel.app](https://make-video-ai.vercel.app)**
+* **Video Walkthrough:** **[https://drive.google.com/file/d/1oTs8tVeXIiZdzsVV8GQQrclj8kM3Rh2K/view](https://drive.google.com/file/d/1oTs8tVeXIiZdzsVV8GQQrclj8kM3Rh2K/view)**
+  
+---
+
 ## ✨ Key Features
 
 ### 💬 Conversational Interface
