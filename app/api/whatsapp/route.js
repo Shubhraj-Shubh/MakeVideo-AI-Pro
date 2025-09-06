@@ -521,6 +521,29 @@ async function clearChatHistory(client, fromNumber) {
 }
 
 
+
+// Show privacy policy to user
+async function showPrivacyPolicy(client, fromNumber) {
+  const privacyPolicy = 
+    "*MakeVideo AI Privacy Policy*\n\n" +
+    "We store the following data:\n" +
+    "- Your WhatsApp number\n" +
+    "- Messages you send to us\n" +
+    "- Our responses to you\n" +
+    "- Videos we generate for you\n\n" +
+    "We use your recent conversation history to provide better responses. " +
+    "This means we may send your recent messages to our AI service providers.\n\n" +
+    "You can delete your data at any time using:\n" +
+    "- /clear-chat - Remove conversation history\n" +
+    "- /delete-history-all - Remove video history\n" +
+    "- /forget-me - Remove all your data\n\n" +
+    "We do not share your data with third parties except as required to provide our service.";
+    
+  await sendTwilioMessage(client, fromNumber, privacyPolicy);
+}
+
+
+
 // Function to show help menu
 async function showHelpMenu(client, fromNumber) {
   const helpMessage = 
