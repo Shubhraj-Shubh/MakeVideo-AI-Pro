@@ -274,7 +274,7 @@ async function checkJobStatus(client, fromNumber, jobId) {
           await sendTwilioMessage(client, fromNumber, "Here's your video:", [jobData.videoUrl]);
           return;
         } else {
-          statusMessage += "\n\nThe video URL is not available. Please contact support.";
+          statusMessage += "\n\nThe video URL is not available. Please contact support at +91 9753648274 or email at shubhrajput19194@gmail.com";
         }
         break;
       case 'failed':

@@ -17,3 +17,13 @@ export const WhatsAppjobsTable = pgTable("jobs", {
   createdAt: timestamp().defaultNow().notNull(),  // job creation time
     updatedAt: timestamp().defaultNow().notNull(),  // last update time
 });
+
+
+// New table for conversation history
+export const ConversationHistoryTable = pgTable("conversation_history", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(), // auto-generated ID
+  userPhone: text().notNull(),                    // user ka phone
+  role: text().notNull(),                         // "user" or "assistant"
+  message: text().notNull(),                      // message content
+  timestamp: timestamp().defaultNow().notNull(),  // when message was sent
+});
