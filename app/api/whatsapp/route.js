@@ -329,20 +329,20 @@ async function checkJobStatus(client, fromNumber, jobId) {
     const creationTime = jobData.createdAt ? new Date(jobData.createdAt) : null;
     const completionTime = jobData.updatedAt ? new Date(jobData.updatedAt) : null;
     
-    let timeInfo = "";
-    if (creationTime) {
-      timeInfo = `\n📅 Created: ${formatDate(creationTime)}`;
+    // let timeInfo = "";
+    // if (creationTime) {
+    //   timeInfo = `\n📅 Created: ${formatDate(creationTime)}`;
       
-      if (completionTime && jobData.status === "completed") {
-        const processingTime = Math.round((completionTime - creationTime) / 1000);
-        timeInfo += `\n⏱️ Processing time: ${processingTime} seconds`;
-      }
-    }
+    //   if (completionTime && jobData.status === "completed") {
+    //     const processingTime = Math.round((completionTime - creationTime) / 1000);
+    //     timeInfo += `\n⏱️ Processing time: ${processingTime} seconds`;
+    //   }
+    // }
 
      let statusMessage = `*Job Status: ${jobId}*\n`;
       statusMessage += `💭 Prompt: "${jobData.userPrompt}"\n`;
     statusMessage += `💭 enhancedPrompt: "${jobData.enhancedPrompt}"\n`;
-    statusMessage += timeInfo + "\n\n";
+    // statusMessage += timeInfo + "\n\n";
     
     switch (jobData.status) {
       case 'processing':
@@ -405,7 +405,7 @@ async function showUserHistory(client, fromNumber) {
       if(job.status==='completed' && job.videoUrl){
          historyMessage += `🔗 VideoUrl: ${job.videoUrl}\n\n`;
       }
-      historyMessage += `📅 ${date}\n\n`;
+      // historyMessage += `📅 ${date}\n\n`;
     }
     
     historyMessage += "To see details for a specific video, send:\n/status [video-id]";
