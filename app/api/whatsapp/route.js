@@ -28,7 +28,7 @@ async function saveConversationMessage(userPhone, role, message) {
 
 
 // Get limited recent conversation history
-async function getRecentConversation(userPhone, limit = 3) {
+async function getRecentConversation(userPhone, limit = 5) {
   try {
     const messages = await db
       .select()
@@ -47,22 +47,23 @@ async function getRecentConversation(userPhone, limit = 3) {
 
 
 
-// Format conversation for Gemini (limited context)
+// Update formatConversationForGemini function to better handle suggested prompts
 function formatConversationForGemini(messages) {
   if (!messages || messages.length === 0) {
     return "No previous conversation.";
   }
   
   return messages.map(msg => {
+    // Handle special format for suggested prompts if we implement that later
+    if (msg.message && msg.message.startsWith("SUGGESTED_PROMPT:")) {
+      const suggestion = msg.message.replace("SUGGESTED_PROMPT:", "");
+      return `MakeVideo AI: 🤔 Your prompt is a bit short. How about this instead: "${suggestion}"`;
+    }
+    
     const roleDisplay = msg.role === "user" ? "User" : "MakeVideo AI";
-    // Truncate long messages to save tokens
-    const messageContent = msg.message.length > 100 
-      ? msg.message.substring(0, 100) + "..." 
-      : msg.message;
-    return `${roleDisplay}: ${messageContent}`;
+    return `${roleDisplay}: ${msg.message}`;
   }).join("\n");
 }
-
 
 
 export async function POST(req) {
@@ -97,27 +98,33 @@ export async function POST(req) {
   const conversationContext = formatConversationForGemini(recentMessages);
 
   //prompt for gemini with conversation context
-  const PROMPT=`You are an intelligent AI assistant for a WhatsApp bot named 'MakeVideo AI'. Your job is to understand the user's message and decide the correct next action.
+const PROMPT=`You are MakeVideo AI Pro, a WhatsApp bot that generates videos based on text descriptions. Read the recent conversation and decide what to do next.
 
-  Analyze the user's message and return a JSON object with two keys: "intent" and "response_text".
+Based on the user's latest message and conversation context, return a JSON object with these fields:
+1. "action": EXACTLY one of these three values:
+   - "generate_video": When the user wants a video and has given a clear, descriptive prompt
+   - "suggest_improvement": When the user wants a video but their prompt is too vague or short
+   - "conversation": For greetings, questions, or any other chat that's not about creating a video
 
-  Classify the user's "intent" into one of these EXACT categories:
-  - "generate_video": The user provides a clear, descriptive prompt for a video.
-  - "clarify_prompt": The user's prompt is too short or vague (e.g., "a cat", "a car").
-  - "request_without_prompt": The user asks to make a video but gives NO description (e.g., "make a video", "generate something").
-  - "greeting": The user says a simple greeting like "hi", "hello".
-  - "small_talk": The user is just chatting or asking a general question about you.
+2. "response": What to say to the user
 
-  Based on the intent, create the "response_text":
-  - For "clarify_prompt", make it an enhanced, descriptive prompt suggestion.
-  - For all other intents, make it a friendly, conversational reply. For "greeting", introduce yourself. For "request_without_prompt", ask for a description.
+3. "prompt": If action is "generate_video", include an enhanced prompt for the video. If action is "suggest_improvement", include your suggested improved prompt.
 
-  Here is the recent conversation context (if any):
-  ${conversationContext}
+IMPORTANT INSTRUCTIONS:
 
-  Do NOT include any text outside of the single JSON object.
+1. If you previously suggested an improved prompt and the user accepts it (by saying "yes", "ok", "sure", etc.), set action to "generate_video" and use your previous suggestion as the prompt.
 
-  Here is the user's message:`;
+2. If the user asks to see past conversations or chat history, respond by actually summarizing the visible conversation in a friendly, detailed way. Include specific details from previous messages that you can see in the conversation context.
+
+3. When discussing the conversation history, be specific about what was said - mention actual prompts, suggestions, or topics discussed in the visible messages.
+
+4. If the user asks about their video history or past videos, kindly direct them to use the "/history" command to see their past video requests.
+
+Recent conversation:
+${conversationContext}
+
+User's latest message: "${incomingMsg}"`;
+
 
 
 
@@ -153,47 +160,39 @@ const RawResp = response.candidates[0].content.parts[0].text;
 const RawJson = RawResp.replace('```json','').replace('```', '');
 const JSONResp = JSON.parse(RawJson);
 
-// Extract intent and response_text fields
-  const intent = JSONResp.intent;
-  const ResponseForUser = JSONResp.response_text;
+  // Extract fields from Gemini response
+  const action = JSONResp.action;
+  const responseText = JSONResp.response;
+  const videoPrompt = JSONResp.prompt || incomingMsg;
 
-  switch (intent) {
-  case "generate_video":
-    // The prompt is good! Start the video generation.
-    await sendTwilioMessage(client,fromNumber, `✅ Got it! Starting video for: "${ResponseForUser}"`);
-    generateVideoInBackground(client, fromNumber,incomingMsg,ResponseForUser);
-    break;
+  // Simplified switch with just 3 cases
+  switch (action) {
+    case "generate_video":
+      // Start video generation with the enhanced prompt
+      await sendTwilioMessage(client, fromNumber, responseText);
+      generateVideoInBackground(client, fromNumber, incomingMsg, videoPrompt);
+      break;
 
-  case "clarify_prompt":
-    // The prompt is too short. Send the suggestion with interactive buttons.
-    await sendTwilioMessage(client,fromNumber, `🤔 Your prompt is a bit short. How about this instead: "${ResponseForUser}"`);
-    break;
-    
-  case "greeting":
-    // The user said hi. Greet them back and tell them what you do.
-    await sendTwilioMessage(client,fromNumber, "Hello! I'm MakeVideo AI. You can describe any video you'd like me to create.");
-    break;
-
-  case "request_without_prompt":
-    // The user asked to make a video but didn't say what.
-    await sendTwilioMessage(client,fromNumber, "I'd love to! Please describe the video you want me to generate.");
-    break;
-
-  case "small_talk":
-    // It's just a chat message. Reply conversationally.
-    await sendTwilioMessage(client,fromNumber, ResponseForUser);
-    break;
-
-  default:
-    // Fallback for any unknown intent
-    await sendTwilioMessage(client,fromNumber, "Sorry, I didn't understand. To create a video, please send me a description.");
-}
-
-
-
+    case "suggest_improvement":
+      // Store the suggestion in conversation history for future reference
+      await saveConversationMessage(fromNumber, "system", `SUGGESTED_PROMPT:${videoPrompt}`);
+      await sendTwilioMessage(client, fromNumber, responseText);
+      break;
+      
+    case "conversation":
+    default:
+      // Just chat normally
+      await sendTwilioMessage(client, fromNumber, responseText);
+      break;
+  }
 }
 catch (geminiError){
     console.error("Gemini error:", geminiError);
+      await sendTwilioMessage(
+    client,
+    fromNumber, 
+    "I'm sorry, I had trouble understanding your message. Could you please try rephrasing it?"
+  );
 }
 
 
@@ -401,8 +400,8 @@ async function showUserHistory(client, fromNumber) {
       const date = job.createdAt ? formatDate(new Date(job.createdAt)) : "Unknown date";
       
       historyMessage += `${statusEmoji} *${job.id}*\n`;
-       historyMessage += `📝 "${job.userPrompt.substring(0, 30)}${job.userPrompt.length > 30 ? '...' : ''}"\n`;
-      historyMessage += `📝 "${job.enhancedPrompt.substring(0, 30)}${job.enhancedPrompt.length > 30 ? '...' : ''}"\n`;
+       historyMessage += `📝UserPrompt: "${job.userPrompt.substring(0, 30)}${job.userPrompt.length > 30 ? '...' : ''}"\n`;
+      historyMessage += `📝EnhancedPrompt: "${job.enhancedPrompt.substring(0, 30)}${job.enhancedPrompt.length > 30 ? '...' : ''}"\n`;
       if(job.status==='completed' && job.videoUrl){
          historyMessage += `🔗 VideoUrl: ${job.videoUrl}\n\n`;
       }
@@ -534,8 +533,8 @@ async function clearChatHistory(client, fromNumber) {
   try {
     try {
     await db.delete(ConversationHistoryTable)
-      .where(eq(ConversationHistoryTable.userPhone, userPhone));
-    console.log(`Deleted conversation history for ${userPhone}`);
+      .where(eq(ConversationHistoryTable.userPhone, fromNumber));
+    console.log(`Deleted conversation history for ${fromNumber}`);
   } catch (error) {
     console.error("Error deleting conversation history:", error);
   }
