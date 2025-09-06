@@ -5,8 +5,8 @@ import {
 import twilio from 'twilio';
 import { randomUUID } from 'crypto';
 import { db } from '@/config/db';
-import { eq } from "drizzle-orm";
-import { WhatsAppjobsTable } from '@/config/schema';
+import { eq,desc } from "drizzle-orm";
+import { WhatsAppjobsTable,ConversationHistoryTable } from '@/config/schema';
 
 
 
