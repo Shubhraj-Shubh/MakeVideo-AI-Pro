@@ -79,6 +79,10 @@ export async function POST(req) {
   
   console.log(`Message received from ${fromNumber}: "${incomingMsg}"`);
 
+
+    // Save user's message to conversation history
+  await saveConversationMessage(fromNumber, "user", incomingMsg);
+
  // Check if this is a command (starts with /)
   if (incomingMsg && incomingMsg.startsWith('/')) {
     await handleCommand(client, fromNumber, incomingMsg);
@@ -88,25 +92,33 @@ export async function POST(req) {
   }
 
 
-//prompt for gemini
-const PROMPT=`You are an intelligent AI assistant for a WhatsApp bot named 'MakeVideo AI'. Your job is to understand the user's message and decide the correct next action.
+    // Get recent conversation history for context (last 3 exchanges)
+  const recentMessages = await getRecentConversation(fromNumber, 3);
+  const conversationContext = formatConversationForGemini(recentMessages);
 
-Analyze the user's message and return a JSON object with two keys: "intent" and "response_text".
+  //prompt for gemini with conversation context
+  const PROMPT=`You are an intelligent AI assistant for a WhatsApp bot named 'MakeVideo AI'. Your job is to understand the user's message and decide the correct next action.
 
-Classify the user's "intent" into one of these EXACT categories:
-- "generate_video": The user provides a clear, descriptive prompt for a video.
-- "clarify_prompt": The user's prompt is too short or vague (e.g., "a cat", "a car").
-- "request_without_prompt": The user asks to make a video but gives NO description (e.g., "make a video", "generate something").
-- "greeting": The user says a simple greeting like "hi", "hello".
-- "small_talk": The user is just chatting or asking a general question about you.
+  Analyze the user's message and return a JSON object with two keys: "intent" and "response_text".
 
-Based on the intent, create the "response_text":
-- For "clarify_prompt", make it an enhanced, descriptive prompt suggestion.
-- For all other intents, make it a friendly, conversational reply. For "greeting", introduce yourself. For "request_without_prompt", ask for a description.
+  Classify the user's "intent" into one of these EXACT categories:
+  - "generate_video": The user provides a clear, descriptive prompt for a video.
+  - "clarify_prompt": The user's prompt is too short or vague (e.g., "a cat", "a car").
+  - "request_without_prompt": The user asks to make a video but gives NO description (e.g., "make a video", "generate something").
+  - "greeting": The user says a simple greeting like "hi", "hello".
+  - "small_talk": The user is just chatting or asking a general question about you.
 
-Do NOT include any text outside of the single JSON object.
+  Based on the intent, create the "response_text":
+  - For "clarify_prompt", make it an enhanced, descriptive prompt suggestion.
+  - For all other intents, make it a friendly, conversational reply. For "greeting", introduce yourself. For "request_without_prompt", ask for a description.
 
-Here is the user's message:`
+  Here is the recent conversation context (if any):
+  ${conversationContext}
+
+  Do NOT include any text outside of the single JSON object.
+
+  Here is the user's message:`;
+
 
 
 // user message ko gemini se pass karna 
@@ -669,6 +681,11 @@ async function sendTwilioMessage(client,toNumber, message, mediaUrls = []) {
       messageOptions.mediaUrl = mediaUrls;
     }
     
+
+     // Save assistant's message to conversation history (exclude media URLs from history)
+    await saveConversationMessage(toNumber, "assistant", message);
+
+
     // Send the message
     // const result = await client.messages.create(messageOptions);
     // console.log(`Message sent successfully. SID: ${result.sid}`);
