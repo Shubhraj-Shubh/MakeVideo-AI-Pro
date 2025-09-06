@@ -8,6 +8,63 @@ import { db } from '@/config/db';
 import { eq } from "drizzle-orm";
 import { WhatsAppjobsTable } from '@/config/schema';
 
+
+
+
+// Save messages to conversation history
+async function saveConversationMessage(userPhone, role, message) {
+  try {
+    await db.insert(ConversationHistoryTable)
+      .values({
+        userPhone: userPhone,
+        role: role,
+        message: message
+      });
+    console.log(`Saved ${role} message to conversation history for ${userPhone}`);
+  } catch (error) {
+    console.error("Error saving to conversation history:", error);
+  }
+}
+
+
+// Get limited recent conversation history
+async function getRecentConversation(userPhone, limit = 3) {
+  try {
+    const messages = await db
+      .select()
+      .from(ConversationHistoryTable)
+      .where(eq(ConversationHistoryTable.userPhone, userPhone))
+      .orderBy(desc(ConversationHistoryTable.timestamp))
+      .limit(limit * 2); // Get both user and assistant messages (pairs)
+    
+    // Return in chronological order (oldest first)
+    return messages.reverse();
+  } catch (error) {
+    console.error("Error retrieving conversation history:", error);
+    return [];
+  }
+}
+
+
+
+// Format conversation for Gemini (limited context)
+function formatConversationForGemini(messages) {
+  if (!messages || messages.length === 0) {
+    return "No previous conversation.";
+  }
+  
+  return messages.map(msg => {
+    const roleDisplay = msg.role === "user" ? "User" : "MakeVideo AI";
+    // Truncate long messages to save tokens
+    const messageContent = msg.message.length > 100 
+      ? msg.message.substring(0, 100) + "..." 
+      : msg.message;
+    return `${roleDisplay}: ${messageContent}`;
+  }).join("\n");
+}
+
+
+
 export async function POST(req) {
 
   // 1. Get credentials and the Twilio client ready
@@ -444,6 +501,25 @@ async function deleteSpecificJob(client, fromNumber, jobId) {
     await sendTwilioMessage(client, fromNumber, "Sorry, there was an error deleting the job. Please try again.");
   }
 }
+
+
+// New command for clearing chat history
+async function clearChatHistory(client, fromNumber) {
+  try {
+    try {
+    await db.delete(ConversationHistoryTable)
+      .where(eq(ConversationHistoryTable.userPhone, userPhone));
+    console.log(`Deleted conversation history for ${userPhone}`);
+  } catch (error) {
+    console.error("Error deleting conversation history:", error);
+  }
+    await sendTwilioMessage(client, fromNumber, "✅ Your chat history has been cleared while keeping your video requests intact.");
+  } catch (error) {
+    console.error("Error clearing chat history:", error);
+    await sendTwilioMessage(client, fromNumber, "Sorry, there was an error clearing your chat history. Please try again.");
+  }
+}
+
 
 // Function to show help menu
 async function showHelpMenu(client, fromNumber) {
