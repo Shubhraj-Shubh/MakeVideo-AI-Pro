@@ -48,6 +48,7 @@ Simply send a text description to our WhatsApp number, and the AI will process y
 ---
 
 ## 🛠️ Technical Architecture
+<img width="3037" height="1551" alt="Make" src="https://github.com/user-attachments/assets/6adf9de4-bf72-4a49-9ba8-ddaa66973f24" />
 
 MakeVideo AI Pro integrates Twilio's WhatsApp API with a sophisticated AI pipeline:
 
