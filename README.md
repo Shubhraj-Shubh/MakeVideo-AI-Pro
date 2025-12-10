@@ -146,7 +146,7 @@ BASE_URL=your_base_url_for_webhook
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/makevideo-ai-pro.git
+git clone https://github.com/Shubhraj-Shubh/makevideo-ai-pro.git
 cd makevideo-ai-pro
 
 # Install dependencies
